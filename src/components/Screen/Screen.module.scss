@@ -1,0 +1,16 @@
+.screen {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 130px;
+  padding: 3rem 2rem;
+  text-align: right;
+  border-radius: 20px;
+  background: #e0e0e0;
+  box-shadow: inset 7px 7px 14px #d0d0d0,
+              inset -7px -7px 14px #f0f0f0;
+  strong {
+    font-size: 1.5rem;
+  }
+}
