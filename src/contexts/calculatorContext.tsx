@@ -31,6 +31,13 @@ export function CalculatorContextProvider(
   }
 
   const handleOperation = (operation: string) => {
+    if (currentOperationText === "0") {
+      if (previousOperationText !== "") {
+        changeOperation(operation)
+      }
+      return
+    }
+
     let operationValue
     const previous = +previousOperationText.slice(0, -1)
     const current = +currentOperationText
@@ -38,6 +45,18 @@ export function CalculatorContextProvider(
     switch (operation) {
       case "+":
         operationValue = previous + current
+        updateScreen(operationValue, operation, current, previous)
+        break;
+      case "-":
+        operationValue = previous - current
+        updateScreen(operationValue, operation, current, previous)
+        break;
+      case "/":
+        operationValue = previous / current
+        updateScreen(operationValue, operation, current, previous)
+        break;
+      case "x":
+        operationValue = previous * current
         updateScreen(operationValue, operation, current, previous)
         break;
 
@@ -68,6 +87,18 @@ export function CalculatorContextProvider(
       setPreviousOperationText(`${operationValue}${operation}`)
       setCurrentOperationText("0")
     }
+  }
+
+  const changeOperation = (operation: string) => {
+    const mathOperations = ["+", "-", "x", "/"]
+
+    if (!mathOperations.includes(operation)) {
+      return
+    }
+
+    setPreviousOperationText(prev => {
+      return prev.slice(0, -1) + operation
+    })
   }
 
   return (
