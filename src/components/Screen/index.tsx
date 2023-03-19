@@ -1,16 +1,13 @@
-import { useCalculatorContext } from "../../contexts/calculatorContext"
-import styles from "./Screen.module.scss"
+import { useCalculatorContext } from "../../contexts/calculatorContext";
+import styles from "./Screen.module.scss";
 
 export function Screen() {
-  const {
-    currentOperationText,
-    previousOperationText
-  } = useCalculatorContext()
+  const { currentOperation, previousOperation } = useCalculatorContext();
 
   return (
     <div className={styles.screen}>
-      <span>{previousOperationText}</span>
-      <strong>{currentOperationText}</strong>
+      <span>{previousOperation}</span>
+      <strong>{currentOperation}</strong>
     </div>
-  )
+  );
 }

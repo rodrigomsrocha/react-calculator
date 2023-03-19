@@ -1,119 +1,138 @@
-import { createContext, ReactNode, useContext, useState } from "react"
+import { createContext, ReactNode, useContext, useState } from "react";
 
 interface CalculatorContextProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 type CalculatorContextType = {
-  previousOperationText: string;
-  currentOperationText: string;
+  previousOperation: string;
   currentOperation: string;
-  addDigit: (digit: string) => void;
-  handleOperation: (operation: string) => void;
-}
+  handleTyping: (key: string) => void;
+};
 
-const CalculatorContext = createContext({} as CalculatorContextType)
+const CalculatorContext = createContext({} as CalculatorContextType);
 
-export function CalculatorContextProvider(
-  { children }: CalculatorContextProviderProps
-) {
-  const [previousOperationText, setPreviousOperationText] = useState("")
-  const [currentOperationText, setCurrentOperationText] = useState("0")
-  let currentOperation = ""
+export function CalculatorContextProvider({
+  children,
+}: CalculatorContextProviderProps) {
+  const [previousOperation, setPreviousOperation] = useState("");
+  const [currentOperation, setCurrentOperation] = useState("0");
 
-  const addDigit = (digit: string) => {
-    if (digit === "." && currentOperationText.includes(".")) {
-      return
+  const handleTyping = (key: string) => {
+    const nonDisplayingOperations = ["c", "<", "="];
+    const mathOperations = ["+", "-", "x", "/"];
+
+    if (mathOperations.includes(key)) {
+      handleMathOperations();
     }
 
-    currentOperation = digit
-    updateScreen()
-  }
-
-  const handleOperation = (operation: string) => {
-    if (currentOperationText === "0") {
-      if (previousOperationText !== "") {
-        changeOperation(operation)
-      }
-      return
+    if (nonDisplayingOperations.includes(key)) {
+      if (key === "=" && !currentOperation.match(/[\+\-\x/]/)) return;
+      handleNonDisplayingOperations(key);
+      return;
     }
 
-    let operationValue
-    const previous = +previousOperationText.slice(0, -1)
-    const current = +currentOperationText
+    setCurrentOperation((prev) => {
+      if (key.match(/[\+\-\x\/]/)) {
+        return `${prev}${key}`;
+      } else if (prev === "0") {
+        return key;
+      } else if (
+        prev[prev.length - 1].match(/[\+\-\x/]/) &&
+        key.match(/[\+\-\x/]/)
+      ) {
+        return prev;
+      } else if (prev.includes(".") && key === ".") return prev;
+      return (prev += key);
+    });
+  };
 
-    switch (operation) {
-      case "+":
-        operationValue = previous + current
-        updateScreen(operationValue, operation, current, previous)
-        break;
-      case "-":
-        operationValue = previous - current
-        updateScreen(operationValue, operation, current, previous)
-        break;
-      case "/":
-        operationValue = previous / current
-        updateScreen(operationValue, operation, current, previous)
-        break;
-      case "x":
-        operationValue = previous * current
-        updateScreen(operationValue, operation, current, previous)
-        break;
+  const handleMathOperations = () => {
+    const alreadyHasAnOperation = currentOperation.match(/(?<!^)[\+\-\x\/]/);
+    if (alreadyHasAnOperation) {
+      setPreviousOperation(currentOperation);
+      const result = calculateExpression();
+      setCurrentOperation(`${result}`);
+      return;
+    }
+  };
 
+  const handleNonDisplayingOperations = (key: string) => {
+    switch (key) {
+      case "c":
+        setPreviousOperation("");
+        setCurrentOperation("0");
+        break;
+      case "<":
+        setCurrentOperation((prev) => {
+          return prev.length === 1 ? "0" : prev.slice(0, -1);
+        });
+        break;
+      case "=":
+        setPreviousOperation("");
+        const result = calculateExpression();
+        setCurrentOperation(`${result}`);
+        break;
       default:
         break;
     }
-  }
+  };
 
-  const updateScreen = (
-    operationValue: null | number = null,
-    operation: null | string = null,
-    current: null | number = null,
-    previous: null | number = null,
-  ) => {
-    console.log(operationValue, operation, current, previous);
-
-    if (operationValue === null) {
-      setCurrentOperationText(prev => {
-        return prev === "0" ?
-          currentOperation :
-          prev += currentOperation
-      })
+  const calculateExpression = () => {
+    let firstTerm;
+    let secondTerm;
+    let currentOperator;
+    if (currentOperation.startsWith("-")) {
+      const currentOperationWithoutMinus = currentOperation.slice(
+        1,
+        currentOperation.length
+      );
+      const indexOfOperator = currentOperationWithoutMinus.search(/[\+\-\x/]/);
+      firstTerm = +`-${currentOperationWithoutMinus.slice(0, indexOfOperator)}`;
+      currentOperator = currentOperationWithoutMinus[indexOfOperator];
+      secondTerm = +currentOperationWithoutMinus.slice(
+        indexOfOperator + 1,
+        currentOperationWithoutMinus.length
+      );
     } else {
-      if (previous === 0) {
-        operationValue = current
-      }
-
-      setPreviousOperationText(`${operationValue}${operation}`)
-      setCurrentOperationText("0")
-    }
-  }
-
-  const changeOperation = (operation: string) => {
-    const mathOperations = ["+", "-", "x", "/"]
-
-    if (!mathOperations.includes(operation)) {
-      return
+      const indexOfOperator = currentOperation.search(/[\+\-\x/]/);
+      firstTerm = +currentOperation.slice(0, indexOfOperator);
+      currentOperator = currentOperation[indexOfOperator];
+      secondTerm = +currentOperation.slice(
+        indexOfOperator + 1,
+        currentOperation.length
+      );
     }
 
-    setPreviousOperationText(prev => {
-      return prev.slice(0, -1) + operation
-    })
-  }
+    console.log(firstTerm, secondTerm, currentOperator);
+
+    switch (currentOperator) {
+      case "+":
+        return firstTerm + secondTerm;
+      case "-":
+        return firstTerm - secondTerm;
+      case "x":
+        return firstTerm * secondTerm;
+      case "/":
+        return firstTerm / secondTerm;
+      default:
+        break;
+    }
+  };
 
   return (
-    <CalculatorContext.Provider value={{
-      previousOperationText,
-      currentOperationText,
-      currentOperation,
-      addDigit,
-      handleOperation
-    }}>
+    <CalculatorContext.Provider
+      value={{
+        previousOperation,
+        currentOperation,
+        handleTyping,
+      }}
+    >
       {children}
     </CalculatorContext.Provider>
-  )
+  );
 }
 
 export function useCalculatorContext() {
-  return useContext(CalculatorContext)
+  return useContext(CalculatorContext);
 }
