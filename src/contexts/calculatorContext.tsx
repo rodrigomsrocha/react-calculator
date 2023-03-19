@@ -9,6 +9,7 @@ type CalculatorContextType = {
   currentOperationText: string;
   currentOperation: string;
   addDigit: (digit: string) => void;
+  handleOperation: (operation: string) => void;
 }
 
 const CalculatorContext = createContext({} as CalculatorContextType)
@@ -29,12 +30,44 @@ export function CalculatorContextProvider(
     updateScreen()
   }
 
-  const updateScreen = () => {
-    setCurrentOperationText(prev => {
-      return prev === "0" ?
-        currentOperation :
-        prev += currentOperation
-    })
+  const handleOperation = (operation: string) => {
+    let operationValue
+    const previous = +previousOperationText.slice(0, -1)
+    const current = +currentOperationText
+
+    switch (operation) {
+      case "+":
+        operationValue = previous + current
+        updateScreen(operationValue, operation, current, previous)
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  const updateScreen = (
+    operationValue: null | number = null,
+    operation: null | string = null,
+    current: null | number = null,
+    previous: null | number = null,
+  ) => {
+    console.log(operationValue, operation, current, previous);
+
+    if (operationValue === null) {
+      setCurrentOperationText(prev => {
+        return prev === "0" ?
+          currentOperation :
+          prev += currentOperation
+      })
+    } else {
+      if (previous === 0) {
+        operationValue = current
+      }
+
+      setPreviousOperationText(`${operationValue}${operation}`)
+      setCurrentOperationText("0")
+    }
   }
 
   return (
@@ -42,7 +75,8 @@ export function CalculatorContextProvider(
       previousOperationText,
       currentOperationText,
       currentOperation,
-      addDigit
+      addDigit,
+      handleOperation
     }}>
       {children}
     </CalculatorContext.Provider>
